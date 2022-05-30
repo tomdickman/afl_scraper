@@ -1,3 +1,3 @@
-import { scrapeAll } from "./scrapers/playerstats"
+import { scrapeCurrent } from "./scrapers/playerstats"
 
-scrapeAll()
+scrapeCurrent()
