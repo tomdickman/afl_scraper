@@ -1,8 +1,10 @@
 export const ROUND_STATS_FIELDS = [
   'playerid',
   'game',
+  'team',
   'opponent',
   'roundNumber',
+  'year',
   'result',
   'jumperNumber',
   'kicks',

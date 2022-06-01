@@ -43,14 +43,14 @@ export const scrapePlayerStats = async (id: string) => {
         const rawData = await (await data.getProperty('innerText')).jsonValue()
         rowStats.push(rawData as string)
       }
-      const roundStats = rawDataToRoundStats(rowStats)
+      const roundStats = rawDataToRoundStats(rowStats, annualStatsTable.team, Number(annualStatsTable.year))
       annualStatsTable.roundStats.push(roundStats)
       const values = [id, ...(roundStatsToPostgres(roundStats))]
 
       await query(`INSERT INTO roundStats (
         ${ROUND_STATS_FIELDS.join(', ')}
       ) VALUES (
-        ${createParametizedValueString(29)}
+        ${createParametizedValueString(31)}
       ) RETURNING *;`, values)
     }
   }

@@ -2,8 +2,10 @@ import { BASE_AFL_TABLES_URL, PLAYER_STATS_PATH } from "../constants/url"
 
 export type RoundStats = {
   game: number,
+  team: string,
   opponent: string,
   roundNumber: string,
+  year: number,
   result: string,
   jumperNumber: number,
   kicks: number,
@@ -36,7 +38,7 @@ export const playerIdToLink = (playerId: string): string => {
   return `${BASE_AFL_TABLES_URL}${PLAYER_STATS_PATH}/${initial}/${playerId}.html`
 }
 
-export const rawDataToRoundStats = (data: string[]): RoundStats => ({
+export const rawDataToRoundStats = (data: string[], team: string, year: number): RoundStats => ({
   game: Number(data[0]),
   opponent: data[1],
   roundNumber: data[2],
@@ -65,12 +67,16 @@ export const rawDataToRoundStats = (data: string[]): RoundStats => ({
   bounces: Number(data[25]),
   goalAssists: Number(data[26]),
   timeOnGroundPercentage: Number(data[27]),
+  team,
+  year,
 })
 
 export const roundStatsToPostgres = (stats: RoundStats) => ([
   stats.game,
+  stats.team,
   stats.opponent,
   stats.roundNumber,
+  stats.year,
   stats.result,
   stats.jumperNumber,
   stats.kicks,

@@ -1,8 +1,12 @@
+DROP TABLE roundstats;
+
 CREATE TABLE IF NOT EXISTS roundstats (
   playerid                  VARCHAR(100) NOT NULL,
   game                      INT,
+  team                      VARCHAR(100),
   opponent                  VARCHAR(255),
   roundNumber               VARCHAR(10),
+  year                      INT,
   result                    VARCHAR(10),
   jumperNumber              INT,
   kicks                     INT,
