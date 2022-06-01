@@ -6,6 +6,8 @@ import { getPlayerLinks } from './playerlinks'
 import { query } from '../database/db'
 import { playerIdToLink, rawDataToRoundStats, RoundStats, roundStatsToPostgres } from '../utils/player'
 import { playerYearStatsTableHeaderMatcher } from '../utils/regex'
+import { ROUND_STATS_FIELDS } from '../constants/roundStats'
+import { createParametizedValueString } from '../utils/database'
 
 type AnnualStats = {
   team: string,
@@ -46,65 +48,9 @@ export const scrapePlayerStats = async (id: string) => {
       const values = [id, ...(roundStatsToPostgres(roundStats))]
 
       await query(`INSERT INTO roundStats (
-        playerid,
-        game,
-        opponent,
-        roundNumber,
-        result,
-        jumperNumber,
-        kicks,
-        marks,
-        handballs,
-        disposals,
-        goals,
-        behinds,
-        hitouts,
-        tackles,
-        rebound50s,
-        inside50s,
-        clearances,
-        clangers,
-        freekicksFor,
-        freekicksAgainst,
-        brownlowVotes,
-        contestedPossessions,
-        uncontestedPossessions,
-        contestedMarks,
-        marksInside50,
-        onepercenters,
-        bounces,
-        goalAssists,
-        timeOnGroundPercentage
+        ${ROUND_STATS_FIELDS.join(', ')}
       ) VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8,
-        $9,
-        $10,
-        $11,
-        $12,
-        $13,
-        $14,
-        $15,
-        $16,
-        $17,
-        $18,
-        $19,
-        $20,
-        $21,
-        $22,
-        $23,
-        $24,
-        $25,
-        $26,
-        $27,
-        $28,
-        $29
+        ${createParametizedValueString(29)}
       ) RETURNING *;`, values)
     }
   }
