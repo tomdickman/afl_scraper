@@ -1,3 +1,3 @@
-import { scrapeCurrent } from "./scrapers/playerstats"
+import { scrapePlayerStats } from "./scrapers/playerstats"
 
-scrapeCurrent()
+scrapePlayerStats('Jordan_Dawson')

@@ -1,9 +1,116 @@
 import 'dotenv/config'
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer'
 import { DateTime } from 'luxon'
 
 import { getPlayerLinks } from './playerlinks'
-import { query } from '../database/db';
+import { query } from '../database/db'
+import { playerIdToLink, rawDataToRoundStats, RoundStats, roundStatsToPostgres } from '../utils/player'
+import { playerYearStatsTableHeaderMatcher } from '../utils/regex'
+
+type AnnualStats = {
+  team: string,
+  year: string,
+  table: puppeteer.ElementHandle,
+  roundStats: RoundStats[]
+}
+
+export const scrapePlayerStats = async (id: string) => {
+  const url = playerIdToLink(id)
+  console.log(url)
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
+  await page.goto(url, { waitUntil: 'networkidle2', })
+  const tables = await page.$$('table')
+  const annualStatsTables: AnnualStats[] = []
+  for (let table of tables) {
+    const heading = await table.$('th')
+    const innerText = await heading?.getProperty('innerText')
+    const value = await innerText?.jsonValue() as string
+    if(playerYearStatsTableHeaderMatcher.test(value)) {
+      const [team, year] = value.split(' - ')
+      annualStatsTables.push({ team, year, table, roundStats: [] })
+    }
+  }
+
+  for (let annualStatsTable of annualStatsTables) {
+    const rows = await annualStatsTable.table.$$('tbody tr')
+    for (let row of rows) {
+      const rowData = await row.$$('td')
+      const rowStats: string[] = []
+      for (let data of rowData) {
+        const rawData = await (await data.getProperty('innerText')).jsonValue()
+        rowStats.push(rawData as string)
+      }
+      const roundStats = rawDataToRoundStats(rowStats)
+      annualStatsTable.roundStats.push(roundStats)
+      const values = [id, ...(roundStatsToPostgres(roundStats))]
+
+      await query(`INSERT INTO roundStats (
+        playerid,
+        game,
+        opponent,
+        roundNumber,
+        result,
+        jumperNumber,
+        kicks,
+        marks,
+        handballs,
+        disposals,
+        goals,
+        behinds,
+        hitouts,
+        tackles,
+        rebound50s,
+        inside50s,
+        clearances,
+        clangers,
+        freekicksFor,
+        freekicksAgainst,
+        brownlowVotes,
+        contestedPossessions,
+        uncontestedPossessions,
+        contestedMarks,
+        marksInside50,
+        onepercenters,
+        bounces,
+        goalAssists,
+        timeOnGroundPercentage
+      ) VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        $14,
+        $15,
+        $16,
+        $17,
+        $18,
+        $19,
+        $20,
+        $21,
+        $22,
+        $23,
+        $24,
+        $25,
+        $26,
+        $27,
+        $28,
+        $29
+      ) RETURNING *;`, values)
+    }
+  }
+
+  browser.close()
+}
 
 export const scrapeCurrent = async () => {
   const year = DateTime.now().year
