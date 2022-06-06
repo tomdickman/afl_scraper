@@ -30,4 +30,5 @@ export const ROUND_STATS_FIELDS = [
   'bounces',
   'goalAssists',
   'timeOnGroundPercentage',
+  'fantasyPoints',
 ]

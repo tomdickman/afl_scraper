@@ -47,18 +47,26 @@ export const scrapePlayerStats = async (id: string) => {
       annualStatsTable.roundStats.push(roundStats)
       const values = [id, ...(roundStatsToPostgres(roundStats))]
 
-      await query(`INSERT INTO roundStats (
-        ${ROUND_STATS_FIELDS.join(', ')}
-      ) VALUES (
-        ${createParametizedValueString(31)}
-      ) RETURNING *;`, values)
+      const queryString = `INSERT INTO
+      roundStats (${ROUND_STATS_FIELDS.join(', ')})
+      VALUES (${createParametizedValueString(32)})
+      RETURNING *;`
+
+      try {
+        await query(queryString, values)
+      } catch(error) {
+        console.log(error)
+        console.log(queryString)
+        console.log(values)
+      }
+
     }
   }
 
   browser.close()
 }
 
-export const scrapeCurrent = async () => {
+export const scrapeCurrentPlayers = async () => {
   const year = DateTime.now().year
   // Grab first only for testing.
   const playerLinks = await getPlayerLinks(year)
@@ -97,17 +105,12 @@ export const scrapeCurrent = async () => {
   await browser.close()
 }
 
-export const scrapeAll = async (from = 2022, to = 2022) => {
-  const players: string[] = [];
+export const scrape = async () => {
+  const players = await query(`SELECT id FROM player`)
+  const playerIds = players.rows.map(player => player.id)
 
-  for (let year = from; year <= to; year++) {
-    const playerLinks = await getPlayerLinks(year)
-    playerLinks.forEach(link => {
-      const found = players.find(player => player === link)
-      if (!found) players.push(link)
-    })
+  for (let playerId of playerIds) {
+    // Block so we don't have too many browsers trying to run at once.
+    await scrapePlayerStats(playerId)
   }
-
-  console.log(players.length);
-  console.log(players);
 }

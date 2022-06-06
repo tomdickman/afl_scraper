@@ -1,3 +1,3 @@
-import { scrapePlayerStats } from "./scrapers/playerstats"
+import { scrape } from "./scrapers/playerstats"
 
-scrapePlayerStats('Ben_Keays')
+scrape()

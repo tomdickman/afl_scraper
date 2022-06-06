@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS roundstats (
   bounces                   INT,
   goalAssists               INT,
   timeOnGroundPercentage    INT,
+  fantasyPoints             INT,
   PRIMARY KEY (playerid, game),
   FOREIGN KEY (playerid) REFERENCES player(id)
 );
