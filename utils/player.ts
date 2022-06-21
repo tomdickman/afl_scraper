@@ -1,13 +1,14 @@
 import { BASE_AFL_TABLES_URL, PLAYER_STATS_PATH } from "../constants/url"
 
 export type RoundStats = {
+  playerid: string,
   game: number,
   team: string,
   opponent: string,
-  roundNumber: string,
+  roundnumber: string,
   year: number,
   result: string,
-  jumperNumber: number,
+  jumpernumber: number,
   kicks: number,
   marks: number,
   handballs: number,
@@ -20,18 +21,18 @@ export type RoundStats = {
   inside50s: number,
   clearances: number,
   clangers: number,
-  freekicksFor: number,
-  freekicksAgainst: number,
-  brownlowVotes: number,
-  contestedPossessions: number,
-  uncontestedPossessions: number,
-  contestedMarks: number,
-  marksInside50: number,
+  freekicksfor: number,
+  freekicksagainst: number,
+  brownlowvotes: number,
+  contestedpossessions: number,
+  uncontestedpossessions: number,
+  contestedmarks: number,
+  marksinside50: number,
   onepercenters: number,
   bounces: number,
-  goalAssists: number,
-  timeOnGroundPercentage: number,
-  fantasyPoints: number,
+  goalassists: number,
+  timeongroundpercentage: number,
+  fantasypoints: number,
 }
 
 export const playerIdToLink = (playerId: string): string => {
@@ -43,13 +44,14 @@ export const parseSanitizedNumberFromString = (input: string) => {
   return Number(input.replace(/\D/g,''))
 }
 
-export const rawDataToRoundStats = (data: string[], team: string, year: number): RoundStats => {
+export const rawDataToRoundStats = (data: string[], playerId: string, team: string, year: number): RoundStats => {
   const roundStats = {
+    playerid: playerId,
     game: parseSanitizedNumberFromString(data[0]),
     opponent: data[1],
-    roundNumber: data[2],
+    roundnumber: data[2],
     result: data[3],
-    jumperNumber: parseSanitizedNumberFromString(data[4]),
+    jumpernumber: parseSanitizedNumberFromString(data[4]),
     kicks: parseSanitizedNumberFromString(data[5]),
     marks: parseSanitizedNumberFromString(data[6]),
     handballs: parseSanitizedNumberFromString(data[7]),
@@ -62,35 +64,36 @@ export const rawDataToRoundStats = (data: string[], team: string, year: number):
     inside50s: parseSanitizedNumberFromString(data[14]),
     clearances: parseSanitizedNumberFromString(data[15]),
     clangers: parseSanitizedNumberFromString(data[16]),
-    freekicksFor: parseSanitizedNumberFromString(data[17]),
-    freekicksAgainst: parseSanitizedNumberFromString(data[18]),
-    brownlowVotes: parseSanitizedNumberFromString(data[19]),
-    contestedPossessions: parseSanitizedNumberFromString(data[20]),
-    uncontestedPossessions: parseSanitizedNumberFromString(data[21]),
-    contestedMarks: parseSanitizedNumberFromString(data[22]),
-    marksInside50: parseSanitizedNumberFromString(data[23]),
+    freekicksfor: parseSanitizedNumberFromString(data[17]),
+    freekicksagainst: parseSanitizedNumberFromString(data[18]),
+    brownlowvotes: parseSanitizedNumberFromString(data[19]),
+    contestedpossessions: parseSanitizedNumberFromString(data[20]),
+    uncontestedpossessions: parseSanitizedNumberFromString(data[21]),
+    contestedmarks: parseSanitizedNumberFromString(data[22]),
+    marksinside50: parseSanitizedNumberFromString(data[23]),
     onepercenters: parseSanitizedNumberFromString(data[24]),
     bounces: parseSanitizedNumberFromString(data[25]),
-    goalAssists: parseSanitizedNumberFromString(data[26]),
-    timeOnGroundPercentage: parseSanitizedNumberFromString(data[27]),
+    goalassists: parseSanitizedNumberFromString(data[26]),
+    timeongroundpercentage: parseSanitizedNumberFromString(data[27]),
     team,
     year,
-    fantasyPoints: 0
+    fantasypoints: 0
   }
 
-  roundStats.fantasyPoints = calculateFantasyPoints(roundStats)
+  roundStats.fantasypoints = calculateFantasyPoints(roundStats)
 
   return roundStats
 }
 
 export const roundStatsToPostgres = (stats: RoundStats) => ([
+  stats.playerid,
   stats.game,
   stats.team,
   stats.opponent,
-  stats.roundNumber,
+  stats.roundnumber,
   stats.year,
   stats.result,
-  stats.jumperNumber,
+  stats.jumpernumber,
   stats.kicks,
   stats.marks,
   stats.handballs,
@@ -103,18 +106,18 @@ export const roundStatsToPostgres = (stats: RoundStats) => ([
   stats.inside50s,
   stats.clearances,
   stats.clangers,
-  stats.freekicksFor,
-  stats.freekicksAgainst,
-  stats.brownlowVotes,
-  stats.contestedPossessions,
-  stats.uncontestedPossessions,
-  stats.contestedMarks,
-  stats.marksInside50,
+  stats.freekicksfor,
+  stats.freekicksagainst,
+  stats.brownlowvotes,
+  stats.contestedpossessions,
+  stats.uncontestedpossessions,
+  stats.contestedmarks,
+  stats.marksinside50,
   stats.onepercenters,
   stats.bounces,
-  stats.goalAssists,
-  stats.timeOnGroundPercentage,
-  stats.fantasyPoints,
+  stats.goalassists,
+  stats.timeongroundpercentage,
+  stats.fantasypoints,
 ])
 
 export const calculateFantasyPoints = (roundStats: RoundStats) => {
@@ -122,8 +125,8 @@ export const calculateFantasyPoints = (roundStats: RoundStats) => {
   const handballPoints = roundStats.handballs * 2
   const markPoints = roundStats.marks * 3
   const tacklePoints = roundStats.tackles * 4
-  const freeForPoints = roundStats.freekicksFor
-  const freeAgainstPoints = roundStats.freekicksAgainst * -3
+  const freeForPoints = roundStats.freekicksfor
+  const freeAgainstPoints = roundStats.freekicksagainst * -3
   const hitoutPoints = roundStats.hitouts
   const goalPoints = roundStats.goals * 6
   const behindPoints = roundStats.behinds

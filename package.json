@@ -5,12 +5,16 @@
   "main": "./dist/scrape.js",
   "scripts": {
     "build": "npx tsc",
-    "scrape": "node ./dist/scrape.js",
+    "exportRoundStats": "node ./dist/exportRoundStats.js",
+    "scrapeRoundStats": "node ./dist/scrapeRoundStats.js",
+    "scrapePlayers": "node ./dist/scrapeCurrentPlayers.js",
     "test": "jest"
   },
   "author": "Tom Dickman",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.110.0",
+    "@aws-sdk/lib-dynamodb": "^3.110.0",
     "dotenv": "^16.0.1",
     "luxon": "^2.4.0",
     "pg": "^8.7.3",
@@ -19,6 +23,7 @@
   "devDependencies": {
     "@types/jest": "^27.5.1",
     "@types/luxon": "^2.3.2",
+    "@types/node": "^18.0.0",
     "@types/pg": "^8.6.5",
     "jest": "^28.1.0",
     "ts-jest": "^28.0.3",

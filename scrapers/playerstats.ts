@@ -8,6 +8,7 @@ import { playerIdToLink, rawDataToRoundStats, RoundStats, roundStatsToPostgres }
 import { playerYearStatsTableHeaderMatcher } from '../utils/regex'
 import { ROUND_STATS_FIELDS } from '../constants/roundStats'
 import { createParametizedValueString } from '../utils/database'
+import { exportRoundStats } from '../exporters/dynamodb'
 
 type AnnualStats = {
   team: string,
@@ -43,9 +44,9 @@ export const scrapePlayerStats = async (id: string) => {
         const rawData = await (await data.getProperty('innerText')).jsonValue()
         rowStats.push(rawData as string)
       }
-      const roundStats = rawDataToRoundStats(rowStats, annualStatsTable.team, Number(annualStatsTable.year))
+      const roundStats = rawDataToRoundStats(rowStats, id, annualStatsTable.team, Number(annualStatsTable.year))
       annualStatsTable.roundStats.push(roundStats)
-      const values = [id, ...(roundStatsToPostgres(roundStats))]
+      const values = roundStatsToPostgres(roundStats)
 
       const queryString = `INSERT INTO
       roundStats (${ROUND_STATS_FIELDS.join(', ')})
@@ -103,6 +104,13 @@ export const scrapeCurrentPlayers = async () => {
   }
 
   await browser.close()
+}
+
+export const exportToDynamo = async () => {
+  const roundStats = await query('SELECT * FROM roundStats')
+  for (let rowStats of roundStats.rows) {
+    await exportRoundStats(rowStats as unknown as RoundStats)
+  }
 }
 
 export const scrape = async () => {
