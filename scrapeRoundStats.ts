@@ -1,3 +1,5 @@
-import { scrape } from "./scrapers/playerstats";
+import { scrapeRoundStats } from "./scrapers/playerstats";
 
-scrape()
+const [_nodeExecutable, _filePath, year, round, fromPlayerId] = [...process.argv]
+
+scrapeRoundStats(Number(year), round, fromPlayerId)

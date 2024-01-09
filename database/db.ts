@@ -10,7 +10,8 @@ const {
   PGPASSWORD,
   PGUSER,
   PGSECURE,
-  PGCERTPATH
+  PGCERTPATH,
+  PGSCHEMA
  } = process.env
 
 const config: PoolConfig = {
@@ -29,3 +30,6 @@ const pool = new Pool(config)
 export const query = async (text: string, params: any = []) => {
   return pool.query(text, params)
 }
+
+export const PLAYER_TABLE = `${PGSCHEMA}.player`
+export const ROUND_STATS_TABLE = `${PGSCHEMA}.roundstats`

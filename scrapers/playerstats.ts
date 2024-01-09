@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer'
 import { DateTime } from 'luxon'
 
 import { getPlayerLinks } from './playerlinks'
-import { query } from '../database/db'
+import { PLAYER_TABLE, query, ROUND_STATS_TABLE } from '../database/db'
 import { playerIdToLink, rawDataToRoundStats, RoundStats, roundStatsToPostgres } from '../utils/player'
 import { playerYearStatsTableHeaderMatcher } from '../utils/regex'
 import { ROUND_STATS_FIELDS } from '../constants/roundStats'
@@ -17,7 +17,7 @@ type AnnualStats = {
   roundStats: RoundStats[]
 }
 
-export const scrapePlayerStats = async (id: string) => {
+export const scrapePlayerStats = async (id: string, year?: number, round?: string) => {
   const url = playerIdToLink(id)
   console.log(url)
   const browser = await puppeteer.launch()
@@ -45,18 +45,23 @@ export const scrapePlayerStats = async (id: string) => {
         rowStats.push(rawData as string)
       }
       const roundStats = rawDataToRoundStats(rowStats, id, annualStatsTable.team, Number(annualStatsTable.year))
+
+      // If using optional params, check that year and round are matching.
+      if (!!year && (year !== roundStats.year)) continue
+      if (!!round && (round !== roundStats.roundnumber)) continue
+
       annualStatsTable.roundStats.push(roundStats)
       const values = roundStatsToPostgres(roundStats)
 
       const queryString = `INSERT INTO
-      roundStats (${ROUND_STATS_FIELDS.join(', ')})
+      ${ROUND_STATS_TABLE} (${ROUND_STATS_FIELDS.join(', ')})
       VALUES (${createParametizedValueString(32)})
       RETURNING *;`
 
       try {
         await query(queryString, values)
       } catch(error) {
-        console.log(error)
+        console.error(error)
         console.log(queryString)
         console.log(values)
       }
@@ -97,7 +102,7 @@ export const scrapeCurrentPlayers = async () => {
       console.log(`Player DOB w/ TZ: ${dob}`)
 
       const values = [playerId, firstName, lastName, dob]
-      await query(`INSERT INTO player (id, givenname, familyname, birthdate) VALUES ($1, $2, $3, $4);`, values)
+      await query(`INSERT INTO ${PLAYER_TABLE} (id, givenname, familyname, birthdate) VALUES ($1, $2, $3, $4);`, values)
     } catch(error) {
       console.log(error)
     }
@@ -107,14 +112,34 @@ export const scrapeCurrentPlayers = async () => {
 }
 
 export const exportToDynamo = async () => {
-  const roundStats = await query('SELECT * FROM roundStats')
+  const roundStats = await query(`SELECT * FROM ${ROUND_STATS_TABLE}`)
   for (let rowStats of roundStats.rows) {
     await exportRoundStats(rowStats as unknown as RoundStats)
   }
 }
 
+export const scrapeRoundStats = async (year: number, round: string, fromPlayerId?: string) => {
+  const players = await query(`SELECT id FROM ${PLAYER_TABLE}`)
+  const playerIds = players.rows.map(player => player.id)
+
+  if (fromPlayerId) {
+    const spliceIndex = playerIds.indexOf(fromPlayerId)
+    if (spliceIndex >= 0) {
+      playerIds.splice(0, spliceIndex)
+    }
+  }
+
+  console.log(playerIds)
+
+  for (let playerId of playerIds) {
+    console.log(`Scraping ${playerId} stats for round ${round}, ${year}`)
+    // Run async to block so we don't have too many browsers trying to run at once.
+    await scrapePlayerStats(playerId, year, round)
+  }
+}
+
 export const scrape = async () => {
-  const players = await query(`SELECT id FROM player`)
+  const players = await query(`SELECT id FROM ${PLAYER_TABLE}`)
   const playerIds = players.rows.map(player => player.id)
 
   for (let playerId of playerIds) {

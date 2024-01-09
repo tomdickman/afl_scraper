@@ -6,6 +6,7 @@
   "scripts": {
     "build": "npx tsc",
     "exportRoundStats": "node ./dist/exportRoundStats.js",
+    "readPlayer": "node ./dist/readPlayer.js",
     "scrapeRoundStats": "node ./dist/scrapeRoundStats.js",
     "scrapePlayers": "node ./dist/scrapeCurrentPlayers.js",
     "test": "jest"
